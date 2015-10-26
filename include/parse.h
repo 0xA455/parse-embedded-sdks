@@ -40,6 +40,12 @@ extern "C"
  *  \brief The embedded API header
  */
 
+#ifdef _WIN32
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT
+#endif
+
 /*! \def APPLICATION_ID_MAX_LEN
  *  \brief The length of application id
  */
@@ -140,7 +146,7 @@ typedef void (*parsePushCallback)(ParseClient client, int error, const char* dat
  *  freeing them and reclaiming the memory after this call.
  *  The SDK will make copies of the buffers.
  */
-ParseClient parseInitialize(const char *applicationId, const char *clientKey);
+DLLEXPORT ParseClient parseInitialize(const char *applicationId, const char *clientKey);
 
 /*! \fn void parseSetInstallationId(ParseClient client, const char *installationId)
  *  \brief Set the installation object id for this client.
@@ -156,7 +162,7 @@ ParseClient parseInitialize(const char *applicationId, const char *clientKey);
  *  freeing it and reclaiming the memory after this call.
  *  The SDK will make copies of the buffer.
  */
-void parseSetInstallationId(ParseClient client, const char *installationId);
+DLLEXPORT void parseSetInstallationId(ParseClient client, const char *installationId);
 
 /*! \fn const char *parseGetInstallationId(ParseClient client)
  *  \brief Return the client installation id
@@ -181,7 +187,8 @@ void parseSetInstallationId(ParseClient client, const char *installationId);
  *  The SDK retains ownership of the result buffer, and still owns it after
  *  this call. Do not free it.
  */
-const char *parseGetInstallationId(ParseClient client);
+DLLEXPORT const char *parseGetInstallationId(ParseClient client);
+
 
 /*! \fn void parseSetSessionToken(ParseClient client, const char *sessionToken)
  *  \brief Set the session token for the Parse client
@@ -195,14 +202,14 @@ const char *parseGetInstallationId(ParseClient client);
  *  freeing it and reclaiming the memory after this call.
  *  The SDK will make copies of the buffer.
  */
-void parseSetSessionToken(ParseClient client, const char *sessionToken);
+DLLEXPORT void parseSetSessionToken(ParseClient client, const char *sessionToken);
 
 /*! \fn void parseClearSessionToken(ParseClient client)
  *  \brief Clear the session token
  *
  *  Same as parseSetSessionToken(client, NULL);
  */
-void parseClearSessionToken(ParseClient client);
+DLLEXPORT void parseClearSessionToken(ParseClient client);
 
 /*! \fn const char *parseGetSessionToken(ParseClient client)
  *  \brief Return the client session token.
@@ -216,7 +223,7 @@ void parseClearSessionToken(ParseClient client);
  *  The SDK retains ownership of the result buffer, and still owns it after
  *  this call. Do not free it.
  */
-const char *parseGetSessionToken(ParseClient client);
+DLLEXPORT const char *parseGetSessionToken(ParseClient client);
 
 /*! \fn void parseSetPushCallback(ParseClient client, parsePushCallback callback)
  *  \brief Set the callback for push notifications and errors
@@ -234,7 +241,7 @@ const char *parseGetSessionToken(ParseClient client);
  *  Any push notifications received while there is no callback associated with the client
  *  will be skipped, and the application will not received them.
  */
-void parseSetPushCallback(ParseClient client, parsePushCallback callback);
+DLLEXPORT void parseSetPushCallback(ParseClient client, parsePushCallback callback);
 
 /*! \fn int parseStartPushService(ParseClient client)
  *  \brief Start the push notifications service.
@@ -253,7 +260,7 @@ void parseSetPushCallback(ParseClient client, parsePushCallback callback);
  *  passed to it as well.
  *
  */
-int parseStartPushService(ParseClient client);
+DLLEXPORT int parseStartPushService(ParseClient client);
 
 /*! \fn void parseStopPushService(ParseClient client)
  *  \brief Stop the push notifications service.
@@ -263,7 +270,7 @@ int parseStartPushService(ParseClient client);
  *
  *  \param[in]  client           The Parse client for which the service should be stopped.
  */
-void parseStopPushService(ParseClient client);
+DLLEXPORT void parseStopPushService(ParseClient client);
 
 /*! \fn int parseProcessNextPushNotification(ParseClient client)
  *  \brief Process next pending push notification.
@@ -281,7 +288,7 @@ void parseStopPushService(ParseClient client);
  *  the case of an error during the processing of the notification. If the callback is not set,
  *  the client will not get notified about any errors that during the processing of the notification.
  */
-int parseProcessNextPushNotification(ParseClient client);
+DLLEXPORT int parseProcessNextPushNotification(ParseClient client);
 
 /*! \fn int parseGetPushSocket(ParseClient client)
  *  \brief Request Parse push file handle for use with select call.
@@ -314,8 +321,8 @@ int parseProcessNextPushNotification(ParseClient client);
  *
  *  \param[in]  client           The Parse client for which the push has been started
  */
-#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined (PART_CC3200)
-int parseGetPushSocket(ParseClient client);
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined (PART_CC3200) || defined(_WIN32)
+DLLEXPORT int parseGetPushSocket(ParseClient client);
 #endif
 
 /*! \fn void parseRunPushLoop(ParseClient client)
@@ -327,7 +334,7 @@ int parseGetPushSocket(ParseClient client);
  *
  *  \param[in]  client           The Parse client for which the push events should be processed.
  */
-void parseRunPushLoop(ParseClient client);
+DLLEXPORT void parseRunPushLoop(ParseClient client);
 
 /*! \fn void parseSendRequest(ParseClient client, const char *httpVerb, const char *httpPath, const char *httpRequestBody, parseRequestCallback callback)
  *  \brief Send an API request.
@@ -346,7 +353,7 @@ void parseRunPushLoop(ParseClient client);
  *  The caller retains ownership of the httpVerb, httpPath, and requestBody buffers, and is responsible for
  *  freeing them and reclaiming the memory after this call.
  */
-void parseSendRequest(ParseClient client, const char *httpVerb, const char *httpPath, const char *httpRequestBody, parseRequestCallback callback);
+DLLEXPORT void parseSendRequest(ParseClient client, const char *httpVerb, const char *httpPath, const char *httpRequestBody, parseRequestCallback callback);
 
 /*! \fn int parseGetErrorCode(const char *httpResponseBody)
  *  \brief Extract Parse error code.
@@ -361,7 +368,7 @@ void parseSendRequest(ParseClient client, const char *httpVerb, const char *http
  * The caller retains ownership of the httpResponseBody buffer, and is responsible for
  * freeing it and reclaiming the memory after this call.
  */
-int parseGetErrorCode(const char *httpResponseBody);
+DLLEXPORT int parseGetErrorCode(const char *httpResponseBody);
 
 #ifdef __cplusplus
 }
