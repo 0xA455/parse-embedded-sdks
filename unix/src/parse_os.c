@@ -25,14 +25,18 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/utsname.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include "parse_win32.h"
+#else
+#include <pwd.h>
+#include <sys/utsname.h>
 #include <unistd.h>
+#endif
 
 #include <parse_log.h>
 
@@ -101,16 +105,17 @@ void parseOsGetVersion(char* buffer, size_t size) {
 }
 
 void parseOsStoreKey(const char* applicationId, const char* key, const char* value) {
+    char key_file[PATH_MAX] = {0};
+	int fdkey = 0;
     if (parseOsSetLocalStorageIfNeeded(applicationId)) {
         return;
     }
-    char key_file[PATH_MAX] = {0};
     strncat(key_file, parse_local_store, PATH_MAX - strlen(key_file) - 1);
     strncat(key_file, key, PATH_MAX - strlen(key_file) - 1);
-    int fdkey = open(key_file, O_WRONLY | O_CREAT | O_TRUNC,  S_ISUID | S_IRWXU);
+    fdkey = open(key_file, O_WRONLY | O_CREAT | O_TRUNC,  S_ISUID | S_IRWXU);
     if (fdkey >= 0) {
         parseLog(PARSE_LOG_INFO, "Writing %s\n", key_file);
-        int bytes = write(fdkey, value, strlen(value) + 1);
+        write(fdkey, value, strlen(value) + 1);
         close(fdkey);
     } else {
         parseLog(PARSE_LOG_ERROR, "Could not write %s\n", key_file);
@@ -120,19 +125,20 @@ void parseOsStoreKey(const char* applicationId, const char* key, const char* val
 }
 
 void parseOsLoadKey(const char* applicationId, const char* key, char* value, size_t size) {
+    char key_file[PATH_MAX] = {0};
+	int fdkey = 0;
     if (size <= 0) return;
 
     if (parseOsSetLocalStorageIfNeeded(applicationId)) {
         return;
     }
 
-    char key_file[PATH_MAX] = {0};
     strncat(key_file, parse_local_store, PATH_MAX - strlen(key_file) - 1);
     strncat(key_file, key, PATH_MAX - strlen(key_file) - 1);
-    int fdkey = open(key_file, O_RDONLY);
+    fdkey = open(key_file, O_RDONLY);
     if (fdkey >= 0) {
         parseLog(PARSE_LOG_INFO, "Reading %s\n", key_file);
-        int bytes = read(fdkey, value, size);
+        read(fdkey, value, size);
         close(fdkey);
     } else {
         value[0] = '\0';
@@ -142,10 +148,10 @@ void parseOsLoadKey(const char* applicationId, const char* key, char* value, siz
 }
 
 void parseOsClearKey(const char* applicationId, const char* key) {
+    char key_file[PATH_MAX] = {0};
     if (parseOsSetLocalStorageIfNeeded(applicationId)) {
         return;
     }
-    char key_file[PATH_MAX] = {0};
     strncat(key_file, parse_local_store, PATH_MAX - strlen(key_file) - 1);
     strncat(key_file, key, PATH_MAX - strlen(key_file) - 1);
 

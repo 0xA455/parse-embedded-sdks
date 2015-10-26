@@ -19,13 +19,13 @@
  *
  */
 
+#include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include <config.h>
 #include <curl/curl.h>
@@ -90,8 +90,7 @@ static void parseCreateInstallationIdIfNeeded(ParseClient client) {
     }
 }
 
-static size_t curlDataCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
+static size_t curlDataCallback(void *contents, size_t size, size_t nmemb, void *userp) {
     ParseRequestDataInternal *data = (ParseRequestDataInternal*)userp;
     long code = 0;
     char* temp = calloc(1, size * nmemb + 1);
@@ -120,11 +119,14 @@ static size_t curlDataCallback(void *contents, size_t size, size_t nmemb, void *
 
 ParseClient parseInitialize(
         const char *applicationId,
-        const char *clientKey)
-{
+        const char *clientKey) {
+	ParseClientInternal *client = NULL;
+    char version[256];
+    char temp[40];
+
     parseSetLogLevel(PARSE_LOG_WARN);
 
-    ParseClientInternal *client = calloc(1, sizeof(ParseClientInternal));
+    client = calloc(1, sizeof(ParseClientInternal));
     if (client == NULL) {
         parseLog(PARSE_LOG_ERROR, "%s:%s generated out of memory.\n", __FUNCTION__, __LINE__);
         return NULL;
@@ -134,11 +136,9 @@ ParseClient parseInitialize(
     if (clientKey != NULL)
         client->clientKey = strdup(clientKey);
 
-    char version[256];
     parseOsGetVersion(version, sizeof(version));
     client->osVersion = strdup(version);
 
-    char temp[40];
     parseOsLoadKey(client->applicationId, PARSE_INSTALLATION_ID, temp, sizeof(temp));
     if (temp[0] != '\0') {
         parseSetInstallationId((ParseClient)client, temp);
@@ -159,36 +159,37 @@ ParseClient parseInitialize(
     return (ParseClient)client;
 }
 
-static void setInstallationCallback(ParseClient client, int error, int httpStatus, const char* httpResponseBody)
-{
+static void setInstallationCallback(ParseClient client, int error, int httpStatus, const char* httpResponseBody) {
+    ParseClientInternal *clientInternal = NULL;
+    char value[64];
     if (error != 0) {
         return;
     }
 
-    ParseClientInternal *clientInternal = getClient(client);
-    char value[64];
+    clientInternal = getClient(client);
     if (simpleJsonProcessor(httpResponseBody, "objectId", value, sizeof(value))) {
         clientInternal->objectId = strdup(value);
     }
     parseLog(PARSE_LOG_INFO, "Got: %s\n", httpResponseBody);
 }
 
-void parseSetInstallationId(ParseClient client, const char *installationId)
-{
+void parseSetInstallationId(ParseClient client, const char *installationId) {
     ParseClientInternal *clientInternal = getClient(client);
 
     if (installationId != NULL) {
+        int payloadLength;
+        char *payload;
         parseOsStoreKey(clientInternal->applicationId, PARSE_INSTALLATION_ID, installationId);
         if (clientInternal->installationId != NULL) {
             free(clientInternal->installationId);
         }
         clientInternal->installationId = strdup(installationId);
 
-        int payloadLength = strlen("{\"installationId\":\"");
+        payloadLength = strlen("{\"installationId\":\"");
         payloadLength += strlen(clientInternal->installationId);
         payloadLength += strlen("\",\"deviceType\":\"embedded\"}") + 1;
 
-        char *payload = calloc(sizeof(char), payloadLength);
+        payload = calloc(sizeof(char), payloadLength);
         if (payload == NULL) {
             parseLog(PARSE_LOG_ERROR, "%s:%s generated out of memory.\n", __FUNCTION__, __LINE__);
             return;
@@ -208,8 +209,7 @@ void parseSetInstallationId(ParseClient client, const char *installationId)
     }
 }
 
-const char *parseGetInstallationId(ParseClient client) 
-{
+const char *parseGetInstallationId(ParseClient client) {
     ParseClientInternal *clientInternal = getClient(client);
     return clientInternal->installationId;
 }
@@ -292,6 +292,9 @@ int parseStartPushService(ParseClient client)
     CURLcode result = CURLE_OK;
     CURL *curl = NULL;
 
+    size_t sent;
+    char push[256];
+
     if (clientInternal->pushCurlHandle != NULL) {
         return 0;
     }
@@ -323,9 +326,6 @@ int parseStartPushService(ParseClient client)
 
     clientInternal->pushCurlHandle = curl;
 
-    size_t sent;
-
-    char push[256];
     if (clientInternal->lastPushTime) {
         snprintf(push,
              sizeof(push),
@@ -367,10 +367,12 @@ int parseProcessNextPushNotification(ParseClient client)
 {
     ParseClientInternal *clientInternal = getClient(client);
     if (clientInternal->pushCurlHandle != NULL) {
-        size_t read = 0;;
+        size_t read = 0;
         int length = -1;
         int start = 0;
         char* message = NULL;
+
+        unsigned int seconds;
 
         while (length == -1 && parse_push_message_size < sizeof(parse_push_message_buffer)) {
             CURLcode result = curl_easy_recv(clientInternal->pushCurlHandle,
@@ -403,11 +405,11 @@ int parseProcessNextPushNotification(ParseClient client)
         parseLog(PARSE_LOG_INFO, "message = %p, start = %i, length = %i\n", message, start, length);
 
         if (length > 0 && message != NULL) {
+            char time[32];
 
             message[length] = '\0'; // We assume messages are separated by '\n'.
             parseLog(PARSE_LOG_INFO, "message = '%s'\n", message);
 
-            char time[32];
             if (simpleJsonProcessor(message, "time", time, sizeof(time))) {
                 if (clientInternal->lastPushTime) {
                     free(clientInternal->lastPushTime);
@@ -430,10 +432,10 @@ int parseProcessNextPushNotification(ParseClient client)
             return (parse_push_message_size > 0) ? 1 : 0;
         }
 
-        unsigned int seconds = secondsSinceBoot();
+        seconds = secondsSinceBoot();
         if (seconds > clientInternal->lastHearbeat + PARSE_HEARTBIT_INTERVAL_SECONDS) {
-            clientInternal->lastHearbeat = seconds;
             size_t sent;
+            clientInternal->lastHearbeat = seconds;
             curl_easy_send(clientInternal->pushCurlHandle, "{}\n", 3, &sent);
         }
     }
@@ -458,9 +460,9 @@ void parseRunPushLoop(ParseClient client) {
 
         if(select(socket + 1, &receive, &send, &error, &tv) > 0) {
             if(FD_ISSET(socket, &error)) {
+                ParseClientInternal *clientInternal = getClient(client);
                 parseLog(PARSE_LOG_WARN, "Push socket has problems.\n");
                 parseStopPushService(client);
-                ParseClientInternal *clientInternal = getClient(client);
                 // we need to notify about the problem because push will not be happening
                 // any more
                 if (clientInternal->pushCallback != NULL) {
@@ -510,6 +512,16 @@ static void parseSendRequestInternal(
     int getRequestBody = 0;
     CURLcode result = CURLE_OK;
     CURL *curl = NULL;
+
+    int urlSize = 0;
+    char* getEncodedBody = NULL;
+    char *fullUrl = NULL;
+
+    struct curl_slist *headers = NULL;
+    char header[128] = { 0 };
+
+    ParseRequestDataInternal data;
+
     curl = curl_easy_init();
     if (curl == NULL) {
         if (callback != NULL) callback(client, CURLE_FAILED_INIT, 0, NULL);
@@ -539,13 +551,13 @@ static void parseSendRequestInternal(
         }
     }
 
-    int urlSize = strlen("https://api.parse.com");
+    urlSize = strlen("https://api.parse.com");
     urlSize += strlen(httpPath) + 1;
-    char* getEncodedBody = NULL;
+    getEncodedBody = NULL;
     if (getRequestBody) {
         urlSize += strlen(requestBody) + 1;
     }
-    char *fullUrl = calloc(1, urlSize + 1);
+    fullUrl = calloc(1, urlSize + 1);
     if (fullUrl == NULL) {
         parseLog(PARSE_LOG_ERROR, "%s:%s generated out of memory.\n", __FUNCTION__, __LINE__);
         if (callback != NULL) callback(client, ENOMEM, 0, NULL);
@@ -566,9 +578,6 @@ static void parseSendRequestInternal(
         return;
     }
 
-    struct curl_slist *headers = NULL;
-
-    char header[128] = {};
     snprintf(header, sizeof(header), "X-Parse-Application-Id: %s", clientInternal->applicationId);
     headers = curl_slist_append(headers, header);
 
@@ -607,7 +616,6 @@ static void parseSendRequestInternal(
         return;
     }
         
-    ParseRequestDataInternal data;
     data.client = client;
     data.requestCallback = callback;
     data.curl = curl;
@@ -670,11 +678,12 @@ int parseGetErrorCode(const char *httpResponseBody)
 int parseGetPushSocket(ParseClient client)
 {
     ParseClientInternal *clientInternal = getClient(client);
+    CURLcode result;
     long socket;
     if (clientInternal->pushCurlHandle == NULL) {
         return -2;
     }
-    CURLcode result = curl_easy_getinfo(clientInternal->pushCurlHandle, CURLINFO_LASTSOCKET, &socket);
+    result = curl_easy_getinfo(clientInternal->pushCurlHandle, CURLINFO_LASTSOCKET, &socket);
     if (result != CURLE_OK && result != CURLE_UNSUPPORTED_PROTOCOL) {
         parseLog(PARSE_LOG_INFO, "error: %i, %s\n", result, curl_easy_strerror(result));
         parseLog(PARSE_LOG_INFO, "socket: %i\n", (int)socket);

@@ -251,17 +251,16 @@ int isCompleteJson(const char *data) {
 const char *getPushJson(const char *data, size_t dataSize, int *start, int *length) {
   int inString = 0;
   int pos = 0;
+  int endPos = 0;
+  int level = 0;
+  const char *end;
+
   const char *beginning = findJsonBeginningParams(data, dataSize, &inString, &pos);
   if (!beginning) {
     *start = -1;
     *length = -1;
     return NULL;
   }
-
-  inString = 0;
-  int endPos = 0;
-  int level = 0;
-  const char *end;
 
   end = findJsonEndParams(data + pos, dataSize - pos, &inString, &level, &endPos);
 
