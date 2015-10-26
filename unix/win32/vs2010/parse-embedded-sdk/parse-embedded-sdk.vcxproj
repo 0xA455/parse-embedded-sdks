@@ -15,7 +15,6 @@
     <ClInclude Include="..\..\..\..\include\parse.h" />
     <ClInclude Include="..\..\..\src\parse_log.h" />
     <ClInclude Include="..\..\..\src\parse_os.h" />
-    <ClInclude Include="..\..\config.h" />
     <ClInclude Include="..\..\dirent.h" />
     <ClInclude Include="..\..\parse_time.h" />
     <ClInclude Include="..\..\parse_uuid.h" />
@@ -44,12 +43,12 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>

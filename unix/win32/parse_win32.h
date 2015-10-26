@@ -68,6 +68,24 @@ static BOOL IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WO
 
 	return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
 }
+
+#include <stdarg.h>
+static int snprintf(char *outBuf, size_t size, const char *format, ...)
+{
+	int count = -1;
+
+	va_list ap;
+	va_start(ap, format);
+
+	if (size != 0)
+		count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
+	if (count == -1)
+		count = _vscprintf(format, ap);
+
+	va_end(ap);
+
+	return count;
+}
 #endif
 
 static int uname(struct utsname *buf) {

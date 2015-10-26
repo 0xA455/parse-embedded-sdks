@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\config.h">
-      <Filter>Source Files\win32</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\unistd.h">
       <Filter>Source Files\win32</Filter>
     </ClInclude>

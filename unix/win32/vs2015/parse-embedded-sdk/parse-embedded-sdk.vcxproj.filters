@@ -62,9 +62,6 @@
     <ClInclude Include="..\..\parse_time.h">
       <Filter>Source Files\win32</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\config.h">
-      <Filter>Source Files\win32</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\dirent.h">
       <Filter>Source Files\win32</Filter>
     </ClInclude>
