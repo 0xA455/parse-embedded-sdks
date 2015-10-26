@@ -31,11 +31,12 @@
     <ClCompile Include="..\..\parse_uuid.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\libcurl.dll" />
-    <None Include="..\..\libcurl.exp" />
+    <None Include="..\..\curl\libcurl.dll" />
+    <None Include="..\..\curl\libcurl.exp" />
+    <None Include="..\..\curl\README.CURL.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\libcurl.lib" />
+    <Library Include="..\..\curl\libcurl.lib" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4508FF8C-EC21-4782-809A-A0A0725CCE1D}</ProjectGuid>

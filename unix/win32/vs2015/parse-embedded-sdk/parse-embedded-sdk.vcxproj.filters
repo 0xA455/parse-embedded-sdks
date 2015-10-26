@@ -67,16 +67,21 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\libcurl.dll">
+    <None Include="..\..\curl\libcurl.dll">
       <Filter>curl</Filter>
     </None>
-    <None Include="..\..\libcurl.exp">
+    <None Include="..\..\curl\libcurl.exp">
       <Filter>curl</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\libcurl.lib">
+    <Library Include="..\..\curl\libcurl.lib">
       <Filter>curl</Filter>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\curl\README.CURL.txt">
+      <Filter>curl</Filter>
+    </Text>
   </ItemGroup>
 </Project>

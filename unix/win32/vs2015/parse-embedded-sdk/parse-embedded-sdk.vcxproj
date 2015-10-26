@@ -140,11 +140,14 @@
     <ClInclude Include="..\..\parse_win32.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\libcurl.dll" />
-    <None Include="..\..\libcurl.exp" />
+    <None Include="..\..\curl\libcurl.dll" />
+    <None Include="..\..\curl\libcurl.exp" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\libcurl.lib" />
+    <Library Include="..\..\curl\libcurl.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\curl\README.CURL.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
