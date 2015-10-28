@@ -71,6 +71,10 @@ static void parseSendRequestInternal(
         parseRequestCallback callback,
         int useInstallationIdHeader);
 
+static parseStoreKeyFunction parseStoreKey = parseOsStoreKey;
+static parseLoadKeyFunction parseLoadKey = parseOsLoadKey;
+static parseClearKeyFunction parseClearKey = parseOsClearKey;
+static parseClearAllKeysFunction parseClearAllKeys = parseOsClearAll;
 
 ParseClientInternal *getClient(ParseClient client) {
     return (ParseClientInternal *)(client);
@@ -81,7 +85,7 @@ static void parseCreateInstallationIdIfNeeded(ParseClient client) {
 
     if (clientInternal->installationId == NULL) {
         char id[37] = {0};
-        parseOsLoadKey(clientInternal->applicationId, PARSE_INSTALLATION_ID, id, sizeof(id));
+        parseLoadKey(clientInternal->applicationId, PARSE_INSTALLATION_ID, id, sizeof(id));
         parseLog(PARSE_LOG_INFO, "loaded installation id = '%s'\n", id);
         if (id[0] == '\0') {
             parseGetUUID(id, sizeof(id));
@@ -139,17 +143,17 @@ ParseClient parseInitialize(
     parseOsGetVersion(version, sizeof(version));
     client->osVersion = strdup(version);
 
-    parseOsLoadKey(client->applicationId, PARSE_INSTALLATION_ID, temp, sizeof(temp));
+    parseLoadKey(client->applicationId, PARSE_INSTALLATION_ID, temp, sizeof(temp));
     if (temp[0] != '\0') {
         parseSetInstallationId((ParseClient)client, temp);
     }
 
-    parseOsLoadKey(client->applicationId, PARSE_SESSION_TOKEN, temp, sizeof(temp));
+    parseLoadKey(client->applicationId, PARSE_SESSION_TOKEN, temp, sizeof(temp));
     if (temp[0] != '\0') {
         parseSetSessionToken((ParseClient)client, temp);
     }
 
-    parseOsLoadKey(client->applicationId, PARSE_LAST_PUSH_TIME, temp, sizeof(temp));
+    parseLoadKey(client->applicationId, PARSE_LAST_PUSH_TIME, temp, sizeof(temp));
     if (temp[0] != '\0') {
         client->lastPushTime = strdup(temp);
     }
@@ -173,13 +177,14 @@ static void setInstallationCallback(ParseClient client, int error, int httpStatu
     parseLog(PARSE_LOG_INFO, "Got: %s\n", httpResponseBody);
 }
 
+
 void parseSetInstallationId(ParseClient client, const char *installationId) {
     ParseClientInternal *clientInternal = getClient(client);
 
     if (installationId != NULL) {
         int payloadLength;
         char *payload;
-        parseOsStoreKey(clientInternal->applicationId, PARSE_INSTALLATION_ID, installationId);
+        parseStoreKey(clientInternal->applicationId, PARSE_INSTALLATION_ID, installationId);
         if (clientInternal->installationId != NULL) {
             free(clientInternal->installationId);
         }
@@ -201,7 +206,7 @@ void parseSetInstallationId(ParseClient client, const char *installationId) {
         parseSendRequestInternal(client, "POST", "/1/installations/", payload, setInstallationCallback, 0);
         free(payload);
     } else {
-        parseOsClearKey(clientInternal->applicationId, PARSE_INSTALLATION_ID);
+        parseClearKey(clientInternal->applicationId, PARSE_INSTALLATION_ID);
         if (clientInternal->installationId != NULL) {
             free(clientInternal->installationId);
             clientInternal->installationId = NULL;
@@ -252,7 +257,7 @@ void parseSetSessionToken(ParseClient client, const char *sessionToken)
 
     if (sessionToken != NULL) {
         parseCreateInstallationIdIfNeeded(client);
-        parseOsStoreKey(clientInternal->applicationId, PARSE_SESSION_TOKEN, sessionToken);
+        parseStoreKey(clientInternal->applicationId, PARSE_SESSION_TOKEN, sessionToken);
         if (clientInternal->sessionToken != NULL) {
             free(clientInternal->sessionToken);
         }
@@ -261,7 +266,7 @@ void parseSetSessionToken(ParseClient client, const char *sessionToken)
         // query the session object by doing GET on /1/sessions/me
         parseSendRequest(client, "GET", "/1/sessions/me", NULL, getSessionObjectCallback);
     } else {
-        parseOsClearKey(clientInternal->applicationId, PARSE_SESSION_TOKEN);
+        parseClearKey(clientInternal->applicationId, PARSE_SESSION_TOKEN);
         if (clientInternal->sessionToken != NULL) {
             free(clientInternal->sessionToken);
             clientInternal->sessionToken = NULL;
@@ -415,7 +420,7 @@ int parseProcessNextPushNotification(ParseClient client)
                     free(clientInternal->lastPushTime);
                 }
                 clientInternal->lastPushTime = strdup(time);
-                parseOsStoreKey(clientInternal->applicationId, PARSE_LAST_PUSH_TIME, time);
+                parseStoreKey(clientInternal->applicationId, PARSE_LAST_PUSH_TIME, time);
                 parseLog(PARSE_LOG_INFO, "lastPush = '%s'\n", clientInternal->lastPushTime);
             }
             if (strncmp("{}", message, 2) == 0) {
@@ -692,3 +697,20 @@ int parseGetPushSocket(ParseClient client)
     return (int)socket;
 }
 
+void parseSetLocalStoreFunctions(parseStoreKeyFunction storeKey,
+                                 parseLoadKeyFunction loadKey,
+                                 parseClearKeyFunction clearKey,
+                                 parseClearAllKeysFunction clearAllKeys)
+{
+    if (storeKey && loadKey && clearKey && clearAllKeys)
+    {
+        parseStoreKey = storeKey;
+        parseLoadKey = loadKey;
+        parseClearKey = clearKey;
+        parseClearAllKeys = clearAllKeys;
+    }
+    else
+    {
+        parseLog(PARSE_LOG_ERROR, "All LocalStore functions must be set\n");
+    }
+}

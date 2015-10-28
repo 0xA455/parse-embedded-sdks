@@ -370,6 +370,28 @@ DLLEXPORT void parseSendRequest(ParseClient client, const char *httpVerb, const 
  */
 DLLEXPORT int parseGetErrorCode(const char *httpResponseBody);
 
+
+typedef void (*parseStoreKeyFunction)(const char* applicationId, const char* key, const char* value);
+typedef void (*parseLoadKeyFunction)(const char* applicationId, const char* key, char* value, size_t size);
+typedef void (*parseClearKeyFunction)(const char* applicationId, const char* key);
+typedef void (*parseClearAllKeysFunction)(const char* applicationId);
+
+/*! \fn int parseSetLocalStoreFunctions(parseStoreKeyFunction storeKey, parseLoadKeyFunction loadKey, parseClearKeyFunction clearKey, parseClearAllKeysFunction clearAllKey)
+ *  \brief 
+ *
+ *  Set the functions that the Parse library will use for its key-value store.
+ *  By default, Parse will put its store in ~/.parse-embedded/applicationId/
+ *
+ *  \param[in] storeKey The function used to store a value.
+ *  \param[in] loadKey The function used to retrieve a value.
+ *  \param[in] clearKey The function used to clear a key/value pair.
+ *  \param[in] clearAllKeys The function used to clear all key/value pairs.
+*/
+DLLEXPORT void parseSetLocalStoreFunctions(parseStoreKeyFunction storeKey, 
+                                           parseLoadKeyFunction loadKey, 
+                                           parseClearKeyFunction clearKey, 
+                                           parseClearAllKeysFunction clearAllKeys);
+
 #ifdef __cplusplus
 }
 #endif
