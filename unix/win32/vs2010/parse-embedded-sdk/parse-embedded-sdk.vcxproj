@@ -15,6 +15,7 @@
     <ClInclude Include="..\..\..\..\include\parse.h" />
     <ClInclude Include="..\..\..\src\parse_log.h" />
     <ClInclude Include="..\..\..\src\parse_os.h" />
+    <ClInclude Include="..\..\config.h" />
     <ClInclude Include="..\..\dirent.h" />
     <ClInclude Include="..\..\parse_time.h" />
     <ClInclude Include="..\..\parse_uuid.h" />
